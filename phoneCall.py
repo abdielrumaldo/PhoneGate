@@ -28,7 +28,7 @@ def send_message():
     # Send a message to each of the tennants
     for user in tennants:
         message = client.messages.create(
-                                body='Hi there!',
+                                body='Someone is at the gate. Let them in?',
                                 from_=config('BOT_NUM'),
                                 to=user
                             )
@@ -49,7 +49,7 @@ def voice():
     # Setup guest input
     gather = Gather(action= '/verify', finishOnKey='#', input='dtmf', timeout='5')
 
-    prompt.say("If you know the code enter it now and press pound. Otherwise, wait for the gatekeepers.", voice='man', language='en-gb')
+    prompt.say("Greetings, If you know the code enter it now and press pound. Otherwise, wait for the gatekeepers.", voice='man', language='en-gb', action='/verify')
 
     prompt.append(gather)
 
