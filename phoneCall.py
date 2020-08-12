@@ -14,7 +14,7 @@ KEY = False
 
 def send_message():
     ''' Sends a text to all the configured tennants that someone is at the door'''
-    # Configure SMS Agentgi 
+    # Configure SMS Agent
     account_sid = config('ACCOUNT_SID')
     auth_token = config('AUTH_TOKEN')
     client = Client(account_sid, auth_token)
@@ -30,7 +30,7 @@ def send_message():
         message = client.messages.create(
                                 body='Hi there!',
                                 from_=config('BOT_NUM'),
-                                to=usergi
+                                to=user
                             )
 
     return str(message)
