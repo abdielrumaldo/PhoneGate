@@ -1,24 +1,105 @@
 
-from flask import Flask
-from twilio.twiml.voice_response import VoiceResponse
+from flask import Flask, request
+from twilio.twiml.voice_response import Gather, VoiceResponse, Say, Play
+from twilio.rest import Client
 from decouple import config
 
 """
-Requires Flask, decouple
+Requires Flask, decouple and twillio 
 """
 app = Flask(__name__)
 
+KEY = False
 
-@app.route("/answer", methods=['GET', 'POST'])
-def answer_call():
-    """Respond to incoming phone calls with a brief message."""
-    # Start our TwiML response
-    resp = VoiceResponse()
 
-    # Read a message aloud to the caller
-    resp.say("Thank you for calling! Have a great day.", voice='alice')
+def send_message():
+    ''' Sends a text to all the configured tennants that someone is at the door'''
+    # Configure SMS Agentgi 
+    account_sid = config('ACCOUNT_SID')
+    auth_token = config('AUTH_TOKEN')
+    client = Client(account_sid, auth_token)
 
-    return str(resp)
+    # Configure Tennants
+    tennants = []
+    tennants.append(config('ABE_NUM'
+    tennants.append(config('BRANI_NUM'))
+    tennants.append(config('MARCEL_NUM'))
+
+    # Send a message to each of the tennants
+    for user in tennants:
+        message = client.messages.create(
+                                body='Hi there!',
+                                from_=config('BOT_NUM'),
+                                to=usergi
+                            )
+
+    return str(message)
+
+
+@app.route("/voice", methods=['GET', 'POST'])
+def voice():
+    """Picks up phone, innitiates prompt and send text to tennant"""
+
+    # message the tennants 
+    send_message()
+
+    # Start Prompt
+    prompt = VoiceResponse()
+
+    # Setup guest input
+    gather = Gather(action= '/verify', finishOnKey='#', input='dtmf', timeout='5')
+
+    prompt.say("If you know the code enter it now and press pound. Otherwise, wait for the gatekeepers.", voice='man', language='en-gb')
+
+    prompt.append(gather)
+
+    return str(prompt)
+
+
+@app.route("/verify", methods=['GET', 'POST'])
+def verify():
+    # Set global key for manipulation
+    global KEY
+
+    # Set up answer
+    answer = VoiceResponse()
+    # If Twilio's request to our app included already gathered digits,
+    # process them
+
+    if 'Digits' in request.values:
+        # Get which digit the caller chose
+        choice = request.values['Digits']
+
+    if choice == "":
+        KEY = True
+
+    if KEY:
+        answer.play('', digits='9ww9ww9')
+        #after the gate is open, reset KEY
+        KEY = False
+        return str(answer)
+    else:
+        answer.play("https://www.myinstants.com/media/sounds/gandalf_shallnotpass.mp3")
+        return str(answer)
+
+
+@app.route('/sms', methods=['GET', 'POST'])
+def incoming_sms():
+    ''' Get a reply from the tennants'''
+    # Set up global
+    global KEY
+
+    # Get the message the user sent our Twilio number
+    body = request.values.get('Body', None)
+
+    if 'yes' in body.lower():
+        KEY = True
+    if 'no' in body.lower():
+        KEY = False
+
+    return 'placeholder'
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)

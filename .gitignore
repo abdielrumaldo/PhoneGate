@@ -33,7 +33,10 @@
 
 # Enviroment Files #
 ######################
-.env
+*.env
+*.ppk
+*.pem
+*.ini
 
 # OS generated files #
 ######################
