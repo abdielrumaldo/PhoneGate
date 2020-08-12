@@ -21,7 +21,7 @@ def send_message():
 
     # Configure Tennants
     tennants = []
-    tennants.append(config('ABE_NUM'
+    tennants.append(config('ABE_NUM'))
     tennants.append(config('BRANI_NUM'))
     tennants.append(config('MARCEL_NUM'))
 
