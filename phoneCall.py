@@ -42,18 +42,19 @@ def voice():
 
     # message the tennants 
     send_message()
+    print("Message sent to tennats")
 
     # Start Prompt
-    prompt = VoiceResponse()
+    response = VoiceResponse()
 
+    gather = Gather(action='/verify', finishOnKey='#', input='dtmf', timeout='5')
     # Setup guest input
-    gather = Gather(action= '/verify', finishOnKey='#', input='dtmf', timeout='5')
+    gather.say("Greetings, If you know the code enter it now and press pound. Otherwise, wait for the gatekeepers.", voice='man', language='en-gb', action='/verify')
 
-    prompt.say("Greetings, If you know the code enter it now and press pound. Otherwise, wait for the gatekeepers.", voice='man', language='en-gb', action='/verify')
+    response.append(gather)
 
-    prompt.append(gather)
-
-    return str(prompt)
+    response.redirect('/verify')
+    return str(response)
 
 
 @app.route("/verify", methods=['GET', 'POST'])
@@ -61,6 +62,7 @@ def verify():
     # Set global key for manipulation
     global KEY
 
+    print("verification started")
     # Set up answer
     answer = VoiceResponse()
     # If Twilio's request to our app included already gathered digits,
@@ -70,17 +72,21 @@ def verify():
         # Get which digit the caller chose
         choice = request.values['Digits']
 
-    if choice == "":
-        KEY = True
-
+        if choice == config('GATE_CODE'):
+            answer.play('', digits='9ww9ww9')
+            #after the gate is open, reset KEY
+            KEY = False   
+            return str(answer)
+            
     if KEY:
         answer.play('', digits='9ww9ww9')
-        #after the gate is open, reset KEY
+        # after the gate is open, reset KEY
         KEY = False
-        return str(answer)
     else:
         answer.play("https://www.myinstants.com/media/sounds/gandalf_shallnotpass.mp3")
-        return str(answer)
+    
+    KEY = False   
+    return str(answer)
 
 
 @app.route('/sms', methods=['GET', 'POST'])
@@ -102,4 +108,4 @@ def incoming_sms():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)
