@@ -13,7 +13,7 @@ KEY = False
 
 def send_message():
     """
-    Sends a text to all the configured tenants that someone is at the door...
+    Sends a text to all the configured tenants that someone is at the door.....
     """
     # Configure SMS Agent
     account_sid = config('ACCOUNT_SID')
