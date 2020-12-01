@@ -1,5 +1,5 @@
 from flask import Flask, request, abort
-from twilio.twiml.voice_response import Gather, VoiceResponse, Say, Play
+from twilio.twiml.voice_response import Gather, VoiceResponse
 from functools import wraps
 from twilio.request_validator import RequestValidator
 from twilio.rest import Client
@@ -141,8 +141,10 @@ def incoming_sms():
         if value == number:
             message = "{} has replied with {}".format(key, body)
             send_message(message)
+            return str(message)
 
-    return 'placeholder'
+    return "You don't have any Tenants listed"
+
 
 
 def send_message(prompt):
@@ -167,9 +169,9 @@ def send_message(prompt):
             from_=config('BOT_NUM'),
             to=number
         )
+        return str(message)
 
-    return str(message)
-
+    return "You don't have any Tenants listed"
 
 
 if __name__ == "__main__":
