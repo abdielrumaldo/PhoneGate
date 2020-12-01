@@ -63,6 +63,8 @@ def voice():
     # Start Prompt
     response = VoiceResponse()
 
+    # TODO Remove this feature because we cannot protect the traffic between the Guest and the app
+    # Using the twillio API
     gather = Gather(action='/verify',
                     finishOnKey='#',
                     input='dtmf',
@@ -87,7 +89,7 @@ def voice():
 def verify():
     # TODO make this more secure by only allowing internal traffic
     print("verification started")
-
+    print(request.headers)
     # Set up voice response instance
     answer = VoiceResponse()
 
@@ -106,7 +108,7 @@ def verify():
         if choice == config('GATE_CODE'):
             answer.play('', digits='9ww9ww9')
             # tells the tenants that the gate has been opened.
-            send_message('The gate that been opened by the correct code.')
+            #send_message('The gate that been opened by the correct code.')
             return str(answer)
 
     # If they were not let in, play "You shall not pass! :)"
