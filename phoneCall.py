@@ -1,7 +1,10 @@
-from flask import Flask, request
-from twilio.twiml.voice_response import Gather, VoiceResponse, Say, Play
+from flask import Flask, request, abort
+from twilio.twiml.voice_response import Gather, VoiceResponse
+from functools import wraps
+from twilio.request_validator import RequestValidator
 from twilio.rest import Client
 from decouple import config
+import logging
 import ast
 
 """
@@ -11,11 +14,44 @@ app = Flask(__name__)
 
 TENANT_KEY = False
 
+def validate_twilio_request(f):
+    """Validates that incoming requests genuinely originated from Twilio"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Create an instance of the RequestValidator class
+        validator = RequestValidator(config('AUTH_TOKEN'))
+
+        # Validate the request using its URL, POST data,
+        # and X-TWILIO-SIGNATURE header
+        request_valid = validator.validate(
+            request.url,
+            request.form,
+            request.headers.get('X-TWILIO-SIGNATURE', ''))
+
+        # Continue processing the request if it's valid, return a 403 error if
+        # it's not
+        if request_valid:
+            return f(*args, **kwargs)
+        else:
+            return abort(403)
+    return decorated_function
+
+
 @app.route("/voice", methods=['GET', 'POST'])
+@validate_twilio_request
 def voice():
     """
     Picks up phone, initiates prompt and send text to tenant
     """
+
+    # Check to make sure the call is from the apartments telephone system
+    whitelisted_numbers = ast.literal_eval(config("ALLOWED_NUMBERS"))
+    caller_number = request.headers.get("From")
+    if caller_number not in whitelisted_numbers:
+        response = VoiceResponse()
+        # The reject function prevents being billed from unwanted numbers
+        response.reject()
+
     # Set global key for manipulation
     global TENANT_KEY
 
@@ -27,6 +63,8 @@ def voice():
     # Start Prompt
     response = VoiceResponse()
 
+    # TODO Remove this feature because we cannot protect the traffic between the Guest and the app
+    # Using the twillio API
     gather = Gather(action='/verify',
                     finishOnKey='#',
                     input='dtmf',
@@ -49,14 +87,15 @@ def voice():
 
 @app.route("/verify", methods=['GET', 'POST'])
 def verify():
-
+    # TODO make this more secure by only allowing internal traffic
     print("verification started")
-
-    # Set up answer
+    print(request.headers)
+    # Set up voice response instance
     answer = VoiceResponse()
 
     # We want the tenants to have priority over who is allowed and who is not
     if TENANT_KEY:
+        # play the code that opens the gate
         answer.play('', digits='9ww9ww9')
         # tells the tenants that the gate has been opened.
         send_message('The gate that been opened by a gatekeeper.')
@@ -69,7 +108,7 @@ def verify():
         if choice == config('GATE_CODE'):
             answer.play('', digits='9ww9ww9')
             # tells the tenants that the gate has been opened.
-            send_message('The gate that been opened by the correct code.')
+            #send_message('The gate that been opened by the correct code.')
             return str(answer)
 
     # If they were not let in, play "You shall not pass! :)"
@@ -78,6 +117,7 @@ def verify():
 
 
 @app.route('/sms', methods=['GET', 'POST'])
+@validate_twilio_request
 def incoming_sms():
     """
     Get a reply from the tenants
@@ -103,18 +143,23 @@ def incoming_sms():
         if value == number:
             message = "{} has replied with {}".format(key, body)
             send_message(message)
+            return str(message)
 
-    return 'placeholder'
+    return "You don't have any Tenants listed"
+
 
 
 def send_message(prompt):
+
     """
     Sends a text to all the configured tenants.
     """
     # Configure SMS Agent
     account_sid = config('ACCOUNT_SID')
     auth_token = config('AUTH_TOKEN')
+    logging.basicConfig()
     client = Client(account_sid, auth_token)
+    client.http_client.logger.setLevel(logging.INFO)
 
     # retrieve tenants
     tenants = ast.literal_eval(config("TENANTS"))
@@ -126,8 +171,9 @@ def send_message(prompt):
             from_=config('BOT_NUM'),
             to=number
         )
+        return str(message)
 
-    return str(message)
+    return "You don't have any Tenants listed"
 
 
 if __name__ == "__main__":
