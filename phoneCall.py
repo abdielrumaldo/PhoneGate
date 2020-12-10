@@ -38,51 +38,52 @@ def validate_twilio_request(f):
 
 
 @app.route("/voice", methods=['GET', 'POST'])
-@validate_twilio_request
+#@validate_twilio_request
 def voice():
     """
     Picks up phone, initiates prompt and send text to tenant
     """
 
-    # Check to make sure the call is from the apartments telephone system
-    whitelisted_numbers = ast.literal_eval(config("ALLOWED_NUMBERS"))
-    caller_number = request.headers.get("From")
-    if caller_number not in whitelisted_numbers:
+    whitelisted_numbers = config("ALLOWED_NUMBERS")
+    caller_number = request.form.get('Caller')
+
+    if caller_number != whitelisted_numbers:
         response = VoiceResponse()
-        # The reject function prevents being billed from unwanted numbers
+        print("REJECTING THE CALL!!!")
         response.reject()
+        return str(response)
+    else:
+        # Set global key for manipulation
+        global TENANT_KEY
 
-    # Set global key for manipulation
-    global TENANT_KEY
+        # Reset key value and message the tenants that someone is at the gate
+        TENANT_KEY = False
+        send_message('Someone is at the gate. Let them in?')
+        print("Message sent to tenants")
 
-    # Reset key value and message the tenants that someone is at the gate
-    TENANT_KEY = False
-    send_message('Someone is at the gate. Let them in?')
-    print("Message sent to tenants")
+        # Start Prompt
+        response = VoiceResponse()
 
-    # Start Prompt
-    response = VoiceResponse()
+        # TODO Remove this feature because we cannot protect the traffic between the Guest and the app
+        # Using the twillio API
+        gather = Gather(action='/verify',
+                        finishOnKey='#',
+                        input='dtmf',
+                        timeout='10'
+                        )
 
-    # TODO Remove this feature because we cannot protect the traffic between the Guest and the app
-    # Using the twillio API
-    gather = Gather(action='/verify',
-                    finishOnKey='#',
-                    input='dtmf',
-                    timeout='10'
-                    )
+        # Setup guest input
+        gather.say("Greetings, If you know the code enter it now and press pound. Otherwise, wait for the gatekeepers.",
+                   voice='man',
+                   language='en-gb',
+                   action='/verify'
+                   )
 
-    # Setup guest input
-    gather.say("Greetings, If you know the code enter it now and press pound. Otherwise, wait for the gatekeepers.",
-               voice='man',
-               language='en-gb',
-               action='/verify'
-               )
+        response.append(gather)
 
-    response.append(gather)
-
-    # Added just in case the guest decides to wait
-    response.redirect('/verify')
-    return str(response)
+        # Added just in case the guest decides to wait
+        response.redirect('/verify')
+        return str(response)
 
 
 @app.route("/verify", methods=['GET', 'POST'])
@@ -177,6 +178,7 @@ def send_message(prompt):
 
 
 if __name__ == "__main__":
-    app.run(debug=True,
-            host='0.0.0.0'
+    app.run(
+            host='0.0.0.0',
+            port='8080'
             )
