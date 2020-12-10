@@ -38,7 +38,7 @@ def validate_twilio_request(f):
 
 
 @app.route("/voice", methods=['GET', 'POST'])
-#@validate_twilio_request
+@validate_twilio_request
 def voice():
     """
     Picks up phone, initiates prompt and send text to tenant
