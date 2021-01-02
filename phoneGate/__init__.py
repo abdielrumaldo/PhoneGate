@@ -3,11 +3,9 @@ from twilio.twiml.voice_response import Gather, VoiceResponse
 from functools import wraps
 from twilio.request_validator import RequestValidator
 from twilio.rest import Client
-from decouple import config
 import logging
-import ast
 """
-Requires Flask, decouple and Twillio 
+Requires Flask and Twillio 
 """
 
 TENANT_KEY = False
