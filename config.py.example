@@ -1,0 +1,47 @@
+class Config(object):
+    DEBUG = False
+    TESTING = False
+    SECRET_KEY = "B\xb2?.\xdf\x9f\xa7m\xf8\x8a%,\xf7\xc4\xfa\x91"
+
+    ALLOWED_NUMBERS = '+14697634188'
+    ACCOUNT_SID = "ACeddcb5e7b8c87a58930eda1014f4e1d7"
+    AUTH_TOKEN = "7ec4fbf5e9f3971c0d7a21e189458d74"
+    BOT_NUM = "+12015286767"
+
+    TENANTS = {'Abe': '+16822403312', 'Brani': '+18177609080', 'Marcel': '+19723256232'}
+    # TODO: To be removed soon
+    GATE_CODE = '519'
+
+class ProductionConfig(Config):
+    pass
+
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+    ALLOWED_NUMBERS = '+14697634188'
+    ACCOUNT_SID = "AC1a3fec8a4394bcb7613ad6a09a77b3cc"
+    AUTH_TOKEN = "f01b06dc87798f722b0f207fd86301d8"
+    BOT_NUM = "+15123796637"
+
+    TENANTS = {'Abe': '+16822403312'}
+
+
+class TestingConfig(Config):
+    TESTING = True
+
+    DB_NAME = "development-db"
+    DB_USERNAME = "admin"
+    DB_PASSWORD = "example"
+
+    SESSION_COOKIE_SECURE = False
+
+
+
+
+
+
+
+
+
+
