@@ -1,6 +1,13 @@
+class Config(object):
+    DEBUG = False
+    TESTING = False
+    SECRET_KEY = "B\xb2?.\xdf\x9f\xa7m\xf8\x8a%,\xf7\xc4\xfa\x91"
 
+    ALLOWED_NUMBERS = ''
+    ACCOUNT_SID = ""
+    AUTH_TOKEN = ""
+    BOT_NUM = ""
 
-
-
-
-
+    TENANTS = {'X': '+1234567', 'Y': '+1234567', 'Z': '+1234567'}
+    # TODO: To be removed soon
+    GATE_CODE = '12345671234567'
